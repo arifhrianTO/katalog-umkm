@@ -10,13 +10,13 @@ const UKURAN_HALAMAN = 12;
 
 function terapkanUrutan(query, urut) {
   if (urut === "termurah") {
-    return query.order("harga", { ascending: true });
+    return query.order("harga", { ascending: true }).order("id", { ascending: true });
   }
   if (urut === "termahal") {
-    return query.order("harga", { ascending: false });
+    return query.order("harga", { ascending: false }).order("id", { ascending: true });
   }
   if (urut === "terbaru") {
-    return query.order("created_at", { ascending: false });
+    return query.order("created_at", { ascending: false }).order("id", { ascending: false });
   }
   return query.order("id", { ascending: true });
 }
