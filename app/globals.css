@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
 /*
-  Token desain. Ganti nilai di sini untuk menyesuaikan dengan usahamu.
-  Penjelasan setiap token ada di DESIGN.md.
+  Token desain. Penjelasan setiap token ada di DESIGN.md.
 */
 @theme {
   --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
@@ -25,6 +24,25 @@
 html {
   color: var(--color-teks);
   background: var(--color-latar);
+}
+
+/* Mode gelap (US-25) */
+html.dark {
+  color-scheme: dark;
+
+  --color-latar: #0e1411;
+  --color-permukaan: #18221d;
+  --color-garis: #28362f;
+  --color-teks: #e6ede9;
+  --color-teks-lembut: #9ab1a5;
+
+  --color-utama: #2ca575;
+  --color-utama-gelap: #238961;
+
+  --color-harga: #eab45c;
+  --color-harga-latar: #382c16;
+
+  --color-bahaya: #f06a6a;
 }
 
 :focus-visible {

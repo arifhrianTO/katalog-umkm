@@ -2,6 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import TombolWhatsApp from "@/components/TombolWhatsApp";
 import TombolBagikan from "@/components/TombolBagikan";
+import TombolKeranjang from "@/components/TombolKeranjang";
+import TombolFavorit from "@/components/TombolFavorit";
+import TombolBandingkan from "@/components/TombolBandingkan";
+import PenandaDilihat from "@/components/PenandaDilihat";
 import KartuProduk from "@/components/KartuProduk";
 import { buatKlienServer } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
@@ -112,11 +116,16 @@ export default async function HalamanDetailProduk({ params }) {
           </p>
           <p className="max-w-prose leading-relaxed text-teks-lembut">{produk.deskripsi}</p>
           <TombolWhatsApp produk={produk} />
-          <div className="pt-1">
+          <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-garis">
+            <TombolKeranjang produk={produk} varian="penuh" />
+            <TombolFavorit produk={produk} />
+            <TombolBandingkan produk={produk} varian="penuh" />
             <TombolBagikan nama={produk.nama} deskripsi={produk.deskripsi} />
           </div>
         </div>
       </article>
+
+      <PenandaDilihat produk={produk} />
 
       {produkTerkait.length > 0 && (
         <section aria-labelledby="judul-terkait" className="flex flex-col gap-5 pb-8">

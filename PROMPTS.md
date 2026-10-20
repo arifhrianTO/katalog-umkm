@@ -313,3 +313,143 @@ Memastikan `app/not-found.jsx` memiliki pesan ramah dan tombol kembali ke berand
 **Perbaikan:**
 
 Mendesain struktur skeleton agar menyerupai tata letak kartu produk dan header katalog sebenarnya.
+
+## US-21 Keranjang, pesan semua via WhatsApp
+
+**Prompt:**
+
+Kerjakan US-21. Buat sistem keranjang belanja dengan penyimpanan di browser (localStorage), ubah jumlah dan hapus item, serta tombol untuk mengirim seluruh pesanan dalam satu format pesan WhatsApp lengkap.
+
+**Hasil:**
+
+Membuat `lib/keranjang.js`, komponen `components/TombolKeranjang.jsx` pada kartu dan halaman detail, badge indikator di header, serta halaman kelola keranjang di `app/keranjang/page.jsx`.
+
+**Perbaikan:**
+
+Menyusun format pesan WhatsApp yang memuat nomor urut, nama produk, kuantitas item, subtotal per produk, dan total pembayaran secara otomatis.
+
+## US-24 Favorit tersimpan di browser
+
+**Prompt:**
+
+Kerjakan US-24. Sediakan fitur simpan produk favorit dengan tombol hati di kartu dan halaman detail yang tersimpan di browser, serta halaman khusus daftar produk favorit di `/favorit`.
+
+**Hasil:**
+
+Membuat `lib/favorit.js`, komponen `components/TombolFavorit.jsx`, dan halaman `app/favorit/page.jsx` yang menampilkan seluruh kartu produk yang ditandai favorit.
+
+**Perbaikan:**
+
+Merestrukturisasi `KartuProduk` agar tombol aksi berada di luar elemen anchor link untuk menjaga validitas standar HTML semantik.
+
+## US-25 Mode gelap
+
+**Prompt:**
+
+Kerjakan US-25. Sediakan fitur mode gelap dengan tombol pengubah tema, simpan preferensi di localStorage, dan pastikan seluruh teks serta komponen tetap terbaca nyaman.
+
+**Hasil:**
+
+Menambahkan aturan token warna `html.dark` pada `app/globals.css`, tombol `components/TombolTema.jsx` di header, dan skrip inline anti-flicker di `app/layout.jsx`.
+
+**Perbaikan:**
+
+Menyesuaikan kontras warna harga, permukaan, dan teks lembut agar ramah di mata pada tema gelap.
+
+## US-30 Dashboard ringkasan admin
+
+**Prompt:**
+
+Kerjakan US-30. Tampilkan ringkasan statistik toko di halaman `/admin`, termasuk total produk aktif dan rincian jumlah produk per kategori dari database.
+
+**Hasil:**
+
+`app/admin/page.jsx` mengambil data statistik dan merender kartu ringkasan total produk, total kategori, serta badge distribusi produk per kelompok kategori.
+
+**Perbaikan:**
+
+Mengurutkan kelompok kategori berdasarkan jumlah produk terbanyak.
+
+## US-33 Cari dan paginasi di list admin
+
+**Prompt:**
+
+Kerjakan US-33. Sediakan fitur pencarian nama produk dan paginasi tabel produk di halaman `/admin` dengan parameter yang tersimpan di URL.
+
+**Hasil:**
+
+`app/admin/page.jsx` membaca parameter `q` dan `hal` dari URL searchParams, menerapkan `.ilike("nama", ...)` dan `.range(...)`, serta menambahkan `components/PaginasiAdmin.jsx`.
+
+**Perbaikan:**
+
+Menambahkan tombol "Reset" saat pencarian aktif agar admin dapat kembali dengan cepat ke daftar lengkap.
+
+## US-34 Validasi form admin di server
+
+**Prompt:**
+
+Kerjakan US-34. Server memvalidasi formulir tambah/ubah produk: nama wajib, harga angka non-negatif, tampilkan error per-field di bawah input yang salah, dan pertahankan nilai isian saat terjadi error.
+
+**Hasil:**
+
+`simpanProduk` di `app/admin/actions.js` melakukan validasi per field dan mengembalikan objek `errors` serta `values`. `components/Input.jsx` dan `components/FormProduk.jsx` menampilkan pesan error merah dan mempertahankan nilai input sebelumnya.
+
+**Perbaikan:**
+
+Menggunakan `key` dinamis berbasis `state.values` pada input formulir agar nilai yang diketik admin tidak ter-reset saat validasi server gagal.
+
+## US-35 Ekspor produk ke CSV
+
+**Prompt:**
+
+Kerjakan US-35. Buat tombol "Ekspor CSV" di halaman admin yang mengunduh seluruh data produk dalam file CSV yang aman terhadap karakter khusus, terproteksi login.
+
+**Hasil:**
+
+Membuat Route Handler `app/admin/produk/ekspor/route.js` yang memverifikasi sesi login admin, melakukan query produk, dan menghasilkan file CSV dengan escaping kutip ganda dan UTF-8 BOM.
+
+**Perbaikan:**
+
+Menambahkan UTF-8 BOM (`\uFEFF`) agar karakter Indonesia dan format tabel dapat langsung dibuka rapi di Microsoft Excel.
+
+## US-36 Terakhir dilihat
+
+**Prompt:**
+
+Kerjakan US-36. Simpan riwayat produk yang dibuka di browser (maksimal 6 item) dan tampilkan bagian "Terakhir Dilihat" di halaman beranda yang hanya muncul jika riwayat ada.
+
+**Hasil:**
+
+Membuat `lib/riwayat.js`, komponen pencatat `components/PenandaDilihat.jsx` pada detail produk, dan komponen tampilan `components/TerakhirDilihat.jsx` pada `app/page.jsx`.
+
+**Perbaikan:**
+
+Memindahkan produk yang dibuka kembali ke urutan paling awal dan membatasi penyimpanan maksimal 6 item.
+
+## US-37 Bandingkan 2 produk
+
+**Prompt:**
+
+Kerjakan US-37. Sediakan fitur perbandingan spesifikasi hingga 2 produk secara berdampingan: foto, kategori, harga, dan deskripsi, dengan proteksi batas maksimal 2 produk.
+
+**Hasil:**
+
+Membuat `lib/bandingkan.js`, komponen `components/TombolBandingkan.jsx`, dan halaman tabel komparasi di `app/bandingkan/page.jsx`.
+
+**Perbaikan:**
+
+Jika pengguna memilih produk ke-3, sistem otomatis menggantikan produk yang paling lama dipilih dan memberikan notifikasi yang jelas.
+
+## US-46 Impor produk dari CSV
+
+**Prompt:**
+
+Kerjakan US-46. Buat fitur impor produk massal dari file CSV di halaman admin dengan validasi per baris, simpan baris yang valid ke database, dan tampilkan ringkasan jumlah berhasil dan gagal.
+
+**Hasil:**
+
+Membuat Server Action `imporProdukCsv` dengan parser CSV lengkap dan halaman unggah di `app/admin/produk/impor/page.jsx`.
+
+**Perbaikan:**
+
+Melaporkan secara detail nomor baris dan penyebab kesalahan jika ada baris yang tidak memenuhi syarat (misal harga bukan angka).
