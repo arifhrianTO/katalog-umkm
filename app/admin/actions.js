@@ -106,3 +106,27 @@ export async function gantiPassword(prevState, formData) {
   return { sukses: "Password berhasil diganti." };
 }
 
+export async function hapusProduk(formData) {
+  const { supabase, user } = await pastikanLogin();
+
+  if (!user) {
+    return { error: "Anda belum login. Silakan login terlebih dahulu." };
+  }
+
+  const id = formData.get("id");
+
+  if (!id) {
+    return { error: "Produk tidak ditemukan." };
+  }
+
+  const { error } = await supabase.from("produk").delete().eq("id", id);
+
+  if (error) {
+    return { error: "Gagal menghapus produk. Silakan coba lagi." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
+
