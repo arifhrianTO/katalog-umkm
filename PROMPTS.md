@@ -229,3 +229,87 @@ Kerjakan US-12. Pengunjung bisa memilih jumlah produk sebelum memesan via WhatsA
 **Perbaikan:**
 
 Format pesan WhatsApp diperbarui agar memuat nama produk, jumlah item, harga satuan, dan total harga dalam format Rupiah, serta pembatasan minimal 1 item.
+
+## US-13 PWA
+
+**Prompt:**
+
+Kerjakan US-13. Katalog dapat dipasang di layar HP seperti aplikasi (PWA), menyediakan web app manifest yang menautkan ikon di public/icons, serta service worker.
+
+**Hasil:**
+
+Membuat `app/manifest.js` (Route Metadata Next.js) dengan ikon 192x192 dan 512x512, tema warna, display standalone, `public/sw.js` minimal untuk installability, dan komponen client `components/PendaftarSW.jsx`.
+
+**Perbaikan:**
+
+Menambahkan konfigurasi viewport `themeColor` dan tautan apple icon di `app/layout.jsx`.
+
+## US-22 Halaman Tentang dan kontak toko
+
+**Prompt:**
+
+Kerjakan US-22. Sediakan halaman profil toko dan kontak (`/tentang`) yang memuat profil, alamat, jam operasional, dan tombol chat WhatsApp dari `lib/toko.js`, tertaut di navigasi dan footer.
+
+**Hasil:**
+
+Membuat `app/tentang/page.jsx` dengan tata letak rapi sesuai `DESIGN.md`, dan menambahkan tautan ke Tentang di `components/Header.jsx` dan `components/Footer.jsx`.
+
+**Perbaikan:**
+
+Menyediakan tombol interaktif chat WhatsApp langsung ke nomor toko dengan pesan pembuka ramah.
+
+## US-23 Bagikan atau salin link produk
+
+**Prompt:**
+
+Kerjakan US-23. Sediakan tombol bagikan di halaman detail produk memakai Web Share API atau fallback clipboard dengan umpan balik visual saat tautan disalin.
+
+**Hasil:**
+
+Membuat `components/TombolBagikan.jsx` yang memanfaatkan `navigator.share` dengan fallback `navigator.clipboard.writeText`, serta status umpan balik teks "Link tersalin!" selama beberapa detik.
+
+**Perbaikan:**
+
+Menangani kondisi user membatalkan dialog share (`AbortError`) dan fallback browser lawas.
+
+## US-26 Metadata SEO dan Open Graph
+
+**Prompt:**
+
+Kerjakan US-26. Pasang generateMetadata dinamis pada halaman detail produk agar memuat judul, deskripsi, dan foto produk pada Open Graph dan Twitter card.
+
+**Hasil:**
+
+Fungsi `generateMetadata` di `app/produk/[id]/page.jsx` mengambil nama, deskripsi, dan foto produk dari database, serta penambahan `metadataBase` di `app/layout.jsx`.
+
+**Perbaikan:**
+
+Menangani penanganan error bila produk tidak ditemukan atau database lambat merespons.
+
+## US-27 sitemap.xml dan robots.txt
+
+**Prompt:**
+
+Kerjakan US-27. Buat sitemap.xml otomatis dari database yang memuat beranda, halaman tentang, kategori, dan semua produk, serta robots.txt yang valid.
+
+**Hasil:**
+
+Membuat `app/sitemap.js` yang melakukan query ke tabel `produk` dan `app/robots.js` yang mengizinkan crawling publik serta memproteksi rute `/admin`.
+
+**Perbaikan:**
+
+Membuat prioritas dan frekuensi perubahan yang sesuai untuk halaman beranda, kategori, dan produk.
+
+## US-28 Halaman 404 dan loading kustom
+
+**Prompt:**
+
+Kerjakan US-28. Sediakan halaman 404 kustom dengan tautan kembali ke beranda dan tampilan loading skeleton yang halus saat data sedang dimuat.
+
+**Hasil:**
+
+Memastikan `app/not-found.jsx` memiliki pesan ramah dan tombol kembali ke beranda, serta menambahkan `app/loading.jsx`, `app/produk/[id]/loading.jsx`, dan `app/kategori/[slug]/loading.jsx` dengan efek `animate-pulse`.
+
+**Perbaikan:**
+
+Mendesain struktur skeleton agar menyerupai tata letak kartu produk dan header katalog sebenarnya.

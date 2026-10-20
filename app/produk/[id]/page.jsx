@@ -1,10 +1,63 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import TombolWhatsApp from "@/components/TombolWhatsApp";
+import TombolBagikan from "@/components/TombolBagikan";
 import KartuProduk from "@/components/KartuProduk";
 import { buatKlienServer } from "@/lib/supabase/server";
 import { formatRupiah } from "@/lib/format";
 import { slugKategori } from "@/lib/kategori";
+import { toko } from "@/lib/toko";
+
+export async function generateMetadata({ params }) {
+  const { id } = await params;
+
+  try {
+    const supabase = buatKlienServer();
+    const { data: produk } = await supabase
+      .from("produk")
+      .select("nama, deskripsi, foto_url")
+      .eq("id", id)
+      .single();
+
+    if (!produk) {
+      return {
+        title: "Produk Tidak Ditemukan",
+      };
+    }
+
+    const judul = `${produk.nama} | ${toko.nama}`;
+    const deskripsi =
+      produk.deskripsi || `${produk.nama} berkualitas tersedia di ${toko.nama}.`;
+
+    return {
+      title: produk.nama,
+      description: deskripsi,
+      openGraph: {
+        title: judul,
+        description: deskripsi,
+        type: "article",
+        images: produk.foto_url
+          ? [
+              {
+                url: produk.foto_url,
+                alt: produk.nama,
+              },
+            ]
+          : [],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: judul,
+        description: deskripsi,
+        images: produk.foto_url ? [produk.foto_url] : [],
+      },
+    };
+  } catch {
+    return {
+      title: "Detail Produk",
+    };
+  }
+}
 
 export default async function HalamanDetailProduk({ params }) {
   const { id } = await params;
@@ -59,6 +112,9 @@ export default async function HalamanDetailProduk({ params }) {
           </p>
           <p className="max-w-prose leading-relaxed text-teks-lembut">{produk.deskripsi}</p>
           <TombolWhatsApp produk={produk} />
+          <div className="pt-1">
+            <TombolBagikan nama={produk.nama} deskripsi={produk.deskripsi} />
+          </div>
         </div>
       </article>
 
