@@ -14,10 +14,11 @@ export default async function sitemap() {
   try {
     const supabase = buatKlienServer();
 
-    // Ambil semua produk untuk rute /produk/[id]
+    // Ambil semua produk aktif untuk rute /produk/[id] (US-32)
     const { data: daftarProduk } = await supabase
       .from("produk")
-      .select("id, created_at, kategori");
+      .select("id, created_at, kategori")
+      .eq("aktif", true);
 
     if (daftarProduk) {
       ruteProduk = daftarProduk.map((item) => ({

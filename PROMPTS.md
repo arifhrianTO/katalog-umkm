@@ -453,3 +453,87 @@ Membuat Server Action `imporProdukCsv` dengan parser CSV lengkap dan halaman ung
 **Perbaikan:**
 
 Melaporkan secara detail nomor baris dan penyebab kesalahan jika ada baris yang tidak memenuhi syarat (misal harga bukan angka).
+
+## US-18 Galeri beberapa foto produk
+
+**Prompt:**
+
+Kerjakan US-18. Sediakan dukungan galeri beberapa foto per produk di database (`foto_tambahan`), tampilan foto utama dan baris gambar thumbnail interaktif pada halaman detail, dan tetap tampil normal untuk produk dengan satu foto.
+
+**Hasil:**
+
+Menambahkan kolom `foto_tambahan text[]` di skema SQL, input textarea foto tambahan di `FormProduk.jsx`, dan komponen client `components/GaleriProduk.jsx` dengan pergantian foto aktif saat thumbnail diklik.
+
+**Perbaikan:**
+
+Menyembunyikan baris thumbnail bila produk hanya memiliki 1 foto utama sehingga tampilan tetap bersih.
+
+## US-19 Status stok
+
+**Prompt:**
+
+Kerjakan US-19. Sediakan status dan jumlah stok di database, tampilkan penanda "Habis" pada produk yang stoknya kosong, serta nonaktifkan tombol pemesanan WhatsApp dan keranjang.
+
+**Hasil:**
+
+Menambahkan kolom `stok integer` di skema SQL, input stok di `FormProduk`, badge "Habis" di kartu dan halaman detail, serta penonaktifan tombol pemesanan bila `stok === 0`.
+
+**Perbaikan:**
+
+Mengatur nilai default `stok = null` sebagai tanda produk selalu tersedia tanpa batas, sedangkan `stok = 0` menandakan barang habis.
+
+## US-20 Harga coret dan badge
+
+**Prompt:**
+
+Kerjakan US-20. Sediakan dukungan harga diskon promo dan badge label ("Baru", "Terlaris") dari database, tampilkan harga normal dicoret di kartu dan halaman detail.
+
+**Hasil:**
+
+Menambahkan kolom `harga_diskon integer` dan `badge text` pada tabel `produk`, opsi pilihan badge dan harga diskon di form admin, serta rendering harga coret dan badge di `KartuProduk.jsx` dan `HalamanDetailProduk`.
+
+**Perbaikan:**
+
+Validasi di server memastikan harga diskon lebih murah dibandingkan harga normal.
+
+## US-31 Kelola kategori
+
+**Prompt:**
+
+Kerjakan US-31. Sediakan manajemen kategori di admin: tambah kategori baru, ubah nama, hapus kategori (tolak jika masih digunakan produk), dan jadikan sumber pilihan kategori di form produk.
+
+**Hasil:**
+
+Membuat tabel `kategori` dengan RLS, Server Actions `tambahKategori`, `ubahKategori`, `hapusKategori`, halaman kelola di `app/admin/kategori/page.jsx`, tautan di `NavAdmin.jsx`, serta dropdown kategori dinamis di `FormProduk.jsx`.
+
+**Perbaikan:**
+
+Memeriksa keterkaitan produk sebelum menghapus kategori dan menolak aksi dengan notifikasi jumlah produk yang masih menggunakannya.
+
+## US-32 Aktif atau nonaktifkan produk
+
+**Prompt:**
+
+Kerjakan US-32. Sediakan tombol toggle aktif atau nonaktif untuk menyembunyikan produk di halaman admin tanpa menghapusnya, serta pastikan produk nonaktif tidak muncul di katalog dan halaman detailnya menampilkan 404.
+
+**Hasil:**
+
+Menambahkan kolom `aktif boolean default true` di database, tombol toggle aktif/nonaktif di `components/TabelProduk.jsx`, penyaringan `.eq("aktif", true)` di katalog, kategori, dan sitemap, serta `notFound()` di halaman detail jika produk nonaktif.
+
+**Perbaikan:**
+
+Memberikan visual opacity lebih redup pada baris tabel admin untuk produk yang berstatus nonaktif.
+
+## US-47 Atur urutan tampil produk
+
+**Prompt:**
+
+Kerjakan US-47. Sediakan kolom urutan prioritas produk di database, tombol naik/turun di tabel admin, dan jadikan urutan ini sebagai prioritas urutan tampil utama di katalog publik.
+
+**Hasil:**
+
+Menambahkan kolom `urutan integer` di skema SQL, tombol panah naik (▲) dan turun (▼) di `TabelProduk.jsx` yang memanggil `aturUrutanProduk`, dan default sorting katalog publik menggunakan `.order("urutan", { ascending: true, nullsFirst: false })`.
+
+**Perbaikan:**
+
+Menyediakan opsi pilihan "Rekomendasi (Urutan)" di dropdown filter katalog dan menjaga urutan stabil dengan secondary sort `id`.

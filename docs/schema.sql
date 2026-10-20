@@ -88,3 +88,38 @@ select
 from kategori k
 cross join lateral unnest(k.daftar) with ordinality as p (nama, ke)
 where not exists (select 1 from public.produk where deskripsi like 'Contoh untuk uji paginasi%');
+
+-- 5. Kolom baru untuk US-18, 19, 20, 32, 47
+alter table public.produk add column if not exists foto_tambahan text[];
+alter table public.produk add column if not exists stok integer;
+alter table public.produk add column if not exists harga_diskon integer
+  check (harga_diskon is null or harga_diskon >= 0);
+alter table public.produk add column if not exists badge text;
+alter table public.produk add column if not exists aktif boolean not null default true;
+alter table public.produk add column if not exists urutan integer;
+
+-- 6. Tabel kategori (US-31)
+create table if not exists public.kategori (
+  id bigint generated always as identity primary key,
+  nama text not null unique,
+  slug text not null unique,
+  created_at timestamptz not null default now()
+);
+alter table public.kategori enable row level security;
+
+drop policy if exists "admin_baca_kategori" on public.kategori;
+drop policy if exists "admin_tambah_kategori" on public.kategori;
+drop policy if exists "admin_ubah_kategori" on public.kategori;
+drop policy if exists "admin_hapus_kategori" on public.kategori;
+
+create policy "admin_baca_kategori" on public.kategori for select to authenticated using (true);
+create policy "admin_tambah_kategori" on public.kategori for insert to authenticated with check (true);
+create policy "admin_ubah_kategori" on public.kategori for update to authenticated using (true) with check (true);
+create policy "admin_hapus_kategori" on public.kategori for delete to authenticated using (true);
+
+-- 7. Isi awal kategori dari produk yang sudah ada
+insert into public.kategori (nama, slug)
+select distinct kategori, lower(regexp_replace(kategori, '[^a-zA-Z0-9]+', '-', 'g'))
+from public.produk
+where kategori is not null and kategori <> ''
+on conflict (nama) do nothing;

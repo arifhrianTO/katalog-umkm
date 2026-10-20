@@ -19,14 +19,17 @@ function terapkanUrutan(query, urut) {
   if (urut === "terbaru") {
     return query.order("created_at", { ascending: false }).order("id", { ascending: false });
   }
-  return query.order("id", { ascending: true });
+  // US-47: Katalog publik mengikuti urutan tersebut (default)
+  return query.order("urutan", { ascending: true, nullsFirst: false }).order("id", { ascending: true });
 }
 
 export default async function HalamanKatalog({ searchParams }) {
   const params = (await searchParams) || {};
   const q = (params.q || "").trim();
   const kategori = params.kategori || "";
-  const urut = ["terbaru", "termurah", "termahal"].includes(params.urut) ? params.urut : "terbaru";
+  const urut = ["urutan", "terbaru", "termurah", "termahal"].includes(params.urut)
+    ? params.urut
+    : "urutan";
   const hal = Math.max(1, Number.parseInt(params.hal, 10) || 1);
 
   let daftarProduk = [];
@@ -38,6 +41,9 @@ export default async function HalamanKatalog({ searchParams }) {
     const supabase = buatKlienServer();
 
     let query = supabase.from("produk").select("*", { count: "exact" });
+
+    // US-32: Sembunyikan produk nonaktif dari katalog publik
+    query = query.eq("aktif", true);
 
     if (q) {
       query = query.ilike("nama", `%${q}%`);
@@ -60,14 +66,25 @@ export default async function HalamanKatalog({ searchParams }) {
       totalHalaman = Math.max(1, Math.ceil((count || 0) / UKURAN_HALAMAN));
     }
 
-    const { data: kategoriData } = await supabase
-      .from("produk")
-      .select("kategori")
-      .not("kategori", "is", null);
+    // US-31: Ambil daftar kategori dari tabel kategori
+    const { data: katData } = await supabase
+      .from("kategori")
+      .select("nama")
+      .order("nama", { ascending: true });
 
-    daftarKategori = [...new Set((kategoriData || []).map((item) => item.kategori))].sort((a, b) =>
-      a.localeCompare(b)
-    );
+    if (katData && katData.length > 0) {
+      daftarKategori = katData.map((k) => k.nama);
+    } else {
+      const { data: kategoriData } = await supabase
+        .from("produk")
+        .select("kategori")
+        .eq("aktif", true)
+        .not("kategori", "is", null);
+
+      daftarKategori = [...new Set((kategoriData || []).map((item) => item.kategori))].sort((a, b) =>
+        a.localeCompare(b)
+      );
+    }
   } catch (err) {
     error = err.message || "Terjadi kesalahan saat menghubungkan ke database.";
   }

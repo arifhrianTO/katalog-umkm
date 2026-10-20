@@ -25,7 +25,26 @@ export async function simpanProduk(prevState, formData) {
   const hargaRaw = (formData.get("harga") || "").toString().trim();
   const kategori = (formData.get("kategori") || "").toString().trim() || null;
   const fotoUrl = (formData.get("foto_url") || "").toString().trim() || null;
+  const fotoTambahanRaw = (formData.get("foto_tambahan") || "").toString();
   const deskripsi = (formData.get("deskripsi") || "").toString().trim() || null;
+  const stokRaw = (formData.get("stok") || "").toString().trim();
+  const hargaDiskonRaw = (formData.get("harga_diskon") || "").toString().trim();
+  const badge = (formData.get("badge") || "").toString().trim() || null;
+  const urutanRaw = (formData.get("urutan") || "").toString().trim();
+
+  const fotoTambahan = fotoTambahanRaw
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const stok =
+    stokRaw === "" ? null : Math.max(0, Number.parseInt(stokRaw, 10) || 0);
+  const hargaDiskon =
+    hargaDiskonRaw === ""
+      ? null
+      : Math.max(0, Number.parseInt(hargaDiskonRaw, 10) || 0);
+  const urutan =
+    urutanRaw === "" ? null : Number.parseInt(urutanRaw, 10) || null;
 
   const errors = {};
   const values = {
@@ -33,7 +52,12 @@ export async function simpanProduk(prevState, formData) {
     harga: hargaRaw,
     kategori,
     foto_url: fotoUrl,
+    foto_tambahan: fotoTambahanRaw,
     deskripsi,
+    stok: stokRaw,
+    harga_diskon: hargaDiskonRaw,
+    badge,
+    urutan: urutanRaw,
   };
 
   // Validasi di server (US-34)
@@ -46,6 +70,11 @@ export async function simpanProduk(prevState, formData) {
     errors.harga = "Harga produk wajib diisi.";
   } else if (!Number.isFinite(hargaNum) || hargaNum < 0) {
     errors.harga = "Harga harus berupa angka lebih besar atau sama dengan 0.";
+  }
+
+  if (hargaDiskon !== null && hargaDiskon >= hargaNum) {
+    errors.harga_diskon =
+      "Harga diskon harus lebih murah daripada harga normal.";
   }
 
   if (Object.keys(errors).length > 0) {
@@ -61,7 +90,12 @@ export async function simpanProduk(prevState, formData) {
     harga: Math.round(hargaNum),
     kategori,
     foto_url: fotoUrl,
+    foto_tambahan: fotoTambahan.length > 0 ? fotoTambahan : null,
     deskripsi,
+    stok,
+    harga_diskon: hargaDiskon,
+    badge,
+    urutan,
   };
 
   const { error } = id
@@ -70,7 +104,7 @@ export async function simpanProduk(prevState, formData) {
 
   if (error) {
     return {
-      error: "Gagal menyimpan produk ke database. Silakan coba lagi.",
+      error: `Gagal menyimpan produk ke database: ${error.message}`,
       values,
     };
   }
@@ -296,5 +330,180 @@ export async function imporProdukCsv(prevState, formData) {
     totalGagal: daftarError.length,
     daftarError,
   };
+}
+
+// US-32: Aktif atau nonaktifkan produk
+export async function toggleAktif(formData) {
+  const { supabase, user } = await pastikanLogin();
+  if (!user) {
+    return { error: "Anda belum login." };
+  }
+
+  const id = formData.get("id");
+  if (!id) return;
+
+  const { data: p } = await supabase
+    .from("produk")
+    .select("aktif")
+    .eq("id", id)
+    .single();
+
+  if (!p) return;
+
+  const baru = !p.aktif;
+  await supabase.from("produk").update({ aktif: baru }).eq("id", id);
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
+
+// US-47: Atur urutan tampil produk (naik / turun)
+export async function aturUrutanProduk(formData) {
+  const { supabase, user } = await pastikanLogin();
+  if (!user) {
+    return { error: "Anda belum login." };
+  }
+
+  const id = formData.get("id");
+  const arah = formData.get("arah"); // "naik" atau "turun"
+  if (!id) return;
+
+  const { data: p } = await supabase
+    .from("produk")
+    .select("urutan")
+    .eq("id", id)
+    .single();
+
+  if (!p) return;
+
+  const cur = p.urutan || 0;
+  // Naik = prioritas lebih tinggi (angka lebih kecil atau bertambah urutannya)
+  // Di katalog: .order("urutan", { ascending: true })
+  // Jadi naik = urutan dikurangi 1, turun = urutan ditambah 1
+  const baru = arah === "naik" ? Math.max(1, cur - 1) : cur + 1;
+
+  await supabase.from("produk").update({ urutan: baru }).eq("id", id);
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
+}
+
+// US-31: Tambah kategori
+export async function tambahKategori(prevState, formData) {
+  const { supabase, user } = await pastikanLogin();
+  if (!user) {
+    return { error: "Anda belum login." };
+  }
+
+  const nama = (formData.get("nama") || "").toString().trim();
+  if (!nama) {
+    return { error: "Nama kategori wajib diisi." };
+  }
+
+  const slug = nama
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const { error } = await supabase.from("kategori").insert({ nama, slug });
+
+  if (error) {
+    if (error.code === "23505") {
+      return { error: `Kategori "${nama}" sudah ada.` };
+    }
+    return { error: `Gagal menambah kategori: ${error.message}` };
+  }
+
+  revalidatePath("/admin/kategori");
+  revalidatePath("/admin/produk/baru");
+  return { sukses: `Kategori "${nama}" berhasil ditambahkan.` };
+}
+
+// US-31: Ubah nama kategori
+export async function ubahKategori(prevState, formData) {
+  const { supabase, user } = await pastikanLogin();
+  if (!user) {
+    return { error: "Anda belum login." };
+  }
+
+  const id = formData.get("id");
+  const namaLama = (formData.get("nama_lama") || "").toString().trim();
+  const nama = (formData.get("nama") || "").toString().trim();
+
+  if (!id || !nama) {
+    return { error: "Nama kategori wajib diisi." };
+  }
+
+  const slug = nama
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  const { error } = await supabase
+    .from("kategori")
+    .update({ nama, slug })
+    .eq("id", id);
+
+  if (error) {
+    return { error: `Gagal mengubah kategori: ${error.message}` };
+  }
+
+  // Jika nama kategori berubah, sinkronkan juga produk yang menggunakan nama ini
+  if (namaLama && namaLama !== nama) {
+    await supabase.from("produk").update({ kategori: nama }).eq("kategori", namaLama);
+  }
+
+  revalidatePath("/admin/kategori");
+  revalidatePath("/admin");
+  revalidatePath("/");
+  return { sukses: `Kategori berhasil diubah menjadi "${nama}".` };
+}
+
+// US-31: Hapus kategori (tolak jika masih dipakai produk)
+export async function hapusKategori(formData) {
+  const { supabase, user } = await pastikanLogin();
+  if (!user) {
+    return { error: "Anda belum login." };
+  }
+
+  const id = formData.get("id");
+  if (!id) return;
+
+  const { data: kat } = await supabase
+    .from("kategori")
+    .select("nama")
+    .eq("id", id)
+    .single();
+
+  if (!kat) return;
+
+  // Periksa apakah masih dipakai oleh produk (US-31 kriteria)
+  const { count } = await supabase
+    .from("produk")
+    .select("*", { count: "exact", head: true })
+    .eq("kategori", kat.nama);
+
+  if (count && count > 0) {
+    revalidatePath("/admin/kategori");
+    redirect(
+      `/admin/kategori?error=${encodeURIComponent(
+        `Kategori "${kat.nama}" tidak dapat dihapus karena masih dipakai oleh ${count} produk. Silakan ubah kategori produk terlebih dahulu.`
+      )}`
+    );
+  }
+
+  await supabase.from("kategori").delete().eq("id", id);
+
+  revalidatePath("/admin/kategori");
+  revalidatePath("/admin/produk/baru");
+  redirect(
+    `/admin/kategori?sukses=${encodeURIComponent(
+      `Kategori "${kat.nama}" berhasil dihapus.`
+    )}`
+  );
 }
 

@@ -2,6 +2,7 @@ import Input from "@/components/Input";
 import Tombol from "@/components/Tombol";
 
 const pilihanUrut = [
+  { nilai: "urutan", label: "Rekomendasi" },
   { nilai: "terbaru", label: "Terbaru" },
   { nilai: "termurah", label: "Termurah" },
   { nilai: "termahal", label: "Termahal" },
